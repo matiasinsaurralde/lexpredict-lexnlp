@@ -30,14 +30,6 @@ def safe_joblib_load(file_path, suppress_warnings=False):
         The loaded object, or None if loading fails
     """
     try:
-        # Try using compatibility layer first for tree-based models
-        from lexnlp.utils.sklearn_compat import load_compatible
-        try:
-            return load_compatible(file_path, suppress_warnings=suppress_warnings)
-        except (ValueError, TypeError, AttributeError):
-            # Fall back to normal loading
-            pass
-        
         # Normal loading
         if suppress_warnings:
             # Suppress all scikit-learn version mismatch warnings

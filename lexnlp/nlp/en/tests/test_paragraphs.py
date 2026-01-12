@@ -14,7 +14,7 @@ import string
 from unittest import TestCase
 
 # Test imports
-from nose.tools import assert_dict_equal, assert_list_equal
+# (nose.tools replaced with standard assertions)
 
 # Project imports
 from lexnlp.extract.common.base_path import lexnlp_test_path
@@ -85,65 +85,60 @@ class TestParagraphs(TestCase):
 
         for text, expected_lines, expected_spans in data:
             actual_lines, actual_spans = splitlines_with_spans(text)
-            assert_list_equal(actual_lines, expected_lines, 'Actual lines do not match the expected '
-                                                            'lines for text:\n{0}'.format(text))
-            assert_list_equal(actual_spans, expected_spans, 'Actual spans do not match the expected '
-                                                            'spans for text:\n{0}'.format(text))
+            assert actual_lines == expected_lines, 'Actual lines do not match the expected ' \
+                                                   'lines for text:\n{0}'.format(text)
+            assert actual_spans == expected_spans, 'Actual spans do not match the expected ' \
+                                                  'spans for text:\n{0}'.format(text)
 
     def test_document_distribution_1_lc(self):
         """
         Test lowercase letters only.
         """
         # Check all dictionaries
-        assert_dict_equal(DOCUMENT_EXAMPLE_1_RESULT_LC,
-                          lexnlp_tests.benchmark_extraction_func(
-                              build_document_distribution,
-                              DOCUMENT_EXAMPLE_1, characters=string.ascii_lowercase))
+        assert DOCUMENT_EXAMPLE_1_RESULT_LC == lexnlp_tests.benchmark_extraction_func(
+            build_document_distribution,
+            DOCUMENT_EXAMPLE_1, characters=string.ascii_lowercase)
 
     def test_document_distribution_1_digits(self):
         """
         Test digits only.
         """
         # Check all dictionaries
-        assert_dict_equal(DOCUMENT_EXAMPLE_1_RESULT_DI,
-                          lexnlp_tests.benchmark_extraction_func(
-                              build_document_distribution,
-                              DOCUMENT_EXAMPLE_1,
-                              characters=string.digits))
+        assert DOCUMENT_EXAMPLE_1_RESULT_DI == lexnlp_tests.benchmark_extraction_func(
+            build_document_distribution,
+            DOCUMENT_EXAMPLE_1,
+            characters=string.digits)
 
     def test_document_distribution_1_custom(self):
         """
         Test custom set.
         """
         # Check all dictionaries
-        assert_dict_equal(DOCUMENT_EXAMPLE_1_RESULT_CUSTOM,
-                          lexnlp_tests.benchmark_extraction_func(
-                              build_document_distribution,
-                              DOCUMENT_EXAMPLE_1,
-                              characters=['1', '2', '3']))
+        assert DOCUMENT_EXAMPLE_1_RESULT_CUSTOM == lexnlp_tests.benchmark_extraction_func(
+            build_document_distribution,
+            DOCUMENT_EXAMPLE_1,
+            characters=['1', '2', '3'])
 
     def test_document_distribution_1_custom_nn(self):
         """
         Test custom set.
         """
         # Check all dictionaries
-        assert_dict_equal(DOCUMENT_EXAMPLE_1_RESULT_CUSTOM_NO_NORM,
-                          lexnlp_tests.benchmark_extraction_func(
-                              build_document_distribution,
-                              DOCUMENT_EXAMPLE_1,
-                              characters=['1', '2', '3'],
-                              norm=False))
+        assert DOCUMENT_EXAMPLE_1_RESULT_CUSTOM_NO_NORM == lexnlp_tests.benchmark_extraction_func(
+            build_document_distribution,
+            DOCUMENT_EXAMPLE_1,
+            characters=['1', '2', '3'],
+            norm=False)
 
     def test_document_distribution_1_print(self):
         """
         Test all printable.
         """
         # Check all dictionaries
-        assert_dict_equal(DOCUMENT_EXAMPLE_1_RESULT_PRINT,
-                          lexnlp_tests.benchmark_extraction_func(
-                              build_document_distribution,
-                              DOCUMENT_EXAMPLE_1,
-                              characters=string.printable))
+        assert DOCUMENT_EXAMPLE_1_RESULT_PRINT == lexnlp_tests.benchmark_extraction_func(
+            build_document_distribution,
+            DOCUMENT_EXAMPLE_1,
+            characters=string.printable)
 
     def test_document_distribution_empty(self):
         """
@@ -160,14 +155,12 @@ class TestParagraphs(TestCase):
         Test all printable.
         """
         # Check all dictionaries
-        assert_dict_equal(
-            d1={},
-            d2=lexnlp_tests.benchmark_extraction_func(
-                func=build_document_distribution,
-                text='',
-                characters=string.printable
-            )
+        result = lexnlp_tests.benchmark_extraction_func(
+            func=build_document_distribution,
+            text='',
+            characters=string.printable
         )
+        assert result == {}
 
     def test_get_paragraphs_too_small_text_with_spans(self):
         text = '\nToo small text\n'
@@ -213,4 +206,4 @@ class TestParagraphs(TestCase):
         actual_paragraphs = [remove_blankspace(p) for p in actual_paragraphs]
         expected_paragraphs = [remove_blankspace(p) for p in expected_paragraphs]
 
-        assert_list_equal(actual_paragraphs, expected_paragraphs)
+        assert actual_paragraphs == expected_paragraphs
