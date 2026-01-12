@@ -42,8 +42,57 @@ evaluation license
 by contacting ContraxSuite Licensing at <<license@contraxsuite.com>>.
 
 ## Requirements
-* Python 3.8
-* pipenv
+* Python 3.8 or higher
+* [uv](https://github.com/astral-sh/uv) (recommended) or pip/pipenv
+
+## Installation
+
+### Using uv (Recommended)
+
+[uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver written in Rust. It's significantly faster than pip and pipenv.
+
+```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create a virtual environment with Python 3.8
+uv venv .venv --python 3.8
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies from requirements files
+uv pip install -r python-requirements.txt
+uv pip install -r python-requirements-dev.txt
+
+# Install the project in development mode (without deps to avoid build issues)
+uv pip install -e . --no-deps
+
+# Run tests
+pytest
+```
+
+**Note**: Some older dependencies (particularly `scikit-learn==0.24.0`) may have build issues. Install from requirements files first, then install the package with `--no-deps`. Use `pytest` directly rather than `uv run pytest` until dependency versions are updated (see `plan.md`).
+
+### Using pip (Alternative)
+
+```bash
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r python-requirements.txt
+pip install -e .
+
+# Or with development dependencies
+pip install -e ".[dev]"
+```
+
+### Using pipenv (Legacy)
+
+```bash
+pipenv install
+pipenv install --dev
+```
 
 ## Releases
 * 2.3.0: November 30, 2022 - Twenty sixth scheduled public release; [code](https://github.com/LexPredict/lexpredict-lexnlp/tree/2.3.0)

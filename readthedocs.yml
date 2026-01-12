@@ -1,6 +1,10 @@
 # readthedocs.yml
 # Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+#
+# Note: ReadTheDocs uses pip by default. For local development, use uv:
+#   uv pip install -r python-requirements.txt
+#   uv pip install -e .
 
 # Required
 version: 2

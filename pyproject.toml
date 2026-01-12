@@ -1,0 +1,128 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lexnlp"
+version = "2.3.0"
+description = "LexPredict LexNLP"
+readme = "README.rst"
+requires-python = ">=3.8"
+license = {text = "AGPL"}
+authors = [
+    {name = "ContraxSuite, LLC", email = "support@contraxsuite.com"}
+]
+maintainers = [
+    {name = "LexPredict, LLC", email = "support@contraxsuite.com"}
+]
+keywords = ["legal", "contract", "document", "analytics", "nlp", "ml", "machine learning", "natural language"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Legal Industry",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Natural Language :: English",
+    "Topic :: Office/Business",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "beautifulsoup4==4.11.1",
+    "cloudpickle==2.2.0",
+    "dateparser==1.1.3",
+    "elasticsearch==8.5.0",
+    "gensim==4.1.2",
+    "importlib-metadata==5.0.0",
+    "joblib==1.2.0",
+    "lxml==4.9.1",
+    "nltk==3.7",
+    "num2words==0.5.12",
+    "numpy==1.23.4",
+    "pandas==1.5.1",
+    "psutil==5.9.4",
+    "pycountry==22.3.5",
+    "python-dateutil==2.8.2",
+    "regex==2022.3.2",
+    "reporters-db==3.2.32",
+    "requests==2.28.1",
+    "scikit-learn==0.24",
+    "scipy==1.9.3",
+    "tqdm==4.64.1",
+    "Unidecode==1.3.6",
+    "us==2.0.2",
+    "zahlwort2num==0.4.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=2.8.5",
+    "mock",
+    "pytz>=2015.7",
+    "nose",
+    "memory-profiler",
+    "psutil",
+    "matplotlib",
+    "Sphinx>=5.3.0",
+    "pytest-cov",
+    "pytest-pylint",
+    "pylint",
+]
+test = [
+    "pytest>=2.8.5",
+    "mock",
+    "pytz>=2015.7",
+    "nose",
+    "memory-profiler",
+    "psutil",
+    "Sphinx>=5.3.0",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://contraxsuite.com"
+Documentation = "http://lexpredict-lexnlp.readthedocs.io/en/latest/"
+Repository = "https://github.com/LexPredict/lexpredict-lexnlp"
+
+[tool.setuptools]
+packages = ["lexnlp"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+lexnlp = [
+    "**/*.pickle",
+    "**/*.csv",
+    "**/*.json",
+    "**/*.txt",
+    "**/*.xml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["lexnlp/tests", "lexnlp"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--verbose",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=2.8.5",
+    "mock",
+    "pytz>=2015.7",
+    "nose",
+    "memory-profiler",
+    "psutil",
+    "matplotlib",
+    "Sphinx>=5.3.0",
+    "pytest-cov",
+    "pytest-pylint",
+    "pylint",
+]

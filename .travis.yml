@@ -1,11 +1,13 @@
 language: python
 python:
-- '3.4'
+- '3.8'
+- '3.9'
+- '3.10'
 sudo: false
 cache:
   directories:
   - "$HOME/tika"
-  - "$HOME/.cache/pip"
+  - "$HOME/.cache/uv"
   - "$HOME/libs"
 addons:
   apt:
@@ -14,15 +16,17 @@ addons:
     - tesseract-ocr
 before_install:
 - chmod +x scripts/*.sh
+- curl -LsSf https://astral.sh/uv/install.sh | sh
+- export PATH="$HOME/.cargo/bin:$PATH"
 install:
-- pip install -r python-requirements.txt
-- pip install -r python-requirements-dev.txt
+- uv pip install --system -r python-requirements.txt
+- uv pip install --system -r python-requirements-dev.txt
 - travis_wait 30 python -m nltk.downloader punkt
 - travis_wait 30 python -m nltk.downloader wordnet
 - travis_wait 30 python -m nltk.downloader averaged_perceptron_tagger
 - travis_wait 30 python -m nltk.downloader maxent_ne_chunker
 - travis_wait 30 python -m nltk.downloader words
-- pip install -e .
+- uv pip install --system -e .
 before_script:
 - "./libs/download_stanford_nlp.sh"
 - "./scripts/download_tika.sh"
