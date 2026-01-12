@@ -755,6 +755,23 @@ def train_default_model(save=True):
         os.unlink("test_date_model.pickle")
 
 
-parser = DateParser(DATE_MODEL_CHARS, enable_classifier_check=True, locale=Locale('en-US'), classifier_model=MODEL_DATE)
-_get_dates = parser.get_dates
-_get_date_list = parser.get_date_list
+# Create parser lazily to avoid loading old models during training
+_parser = None
+
+def _get_parser():
+    global _parser
+    if _parser is None:
+        _parser = DateParser(DATE_MODEL_CHARS, enable_classifier_check=True, locale=Locale('en-US'), classifier_model=MODEL_DATE)
+    return _parser
+
+def _get_dates(*args, **kwargs):
+    return _get_parser().get_dates(*args, **kwargs)
+
+def _get_date_list(*args, **kwargs):
+    return _get_parser().get_date_list(*args, **kwargs)
+
+def _get_date_annotations(*args, **kwargs):
+    return _get_parser().get_date_annotations(*args, **kwargs)
+
+def _get_date_annotation_list(*args, **kwargs):
+    return _get_parser().get_date_annotation_list(*args, **kwargs)

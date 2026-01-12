@@ -16,6 +16,10 @@ import regex as re
 import sklearn
 import sklearn.ensemble
 import sklearn.neural_network
+import sklearn.pipeline
+import sklearn.feature_selection
+import sklearn.linear_model
+import sklearn.metrics
 from sklearn.model_selection import cross_val_score
 
 
