@@ -114,3 +114,4 @@ benchmarks
 lexnlp/extract/en/contracts/data/*.model
 /.pytest_cache/
 
+unpack_def_model_temp/

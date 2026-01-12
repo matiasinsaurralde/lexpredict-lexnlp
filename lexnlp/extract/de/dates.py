@@ -22,8 +22,24 @@ from lexnlp.extract.de.de_date_parser import DeDateParser
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Load model
-MODEL_DATE = joblib.load(os.path.join(MODULE_PATH, "./date_model.pickle"))
+# Load model lazily to avoid import-time errors with scikit-learn version mismatches
+_MODEL_DATE = None
+
+def _get_model_date():
+    global _MODEL_DATE
+    if _MODEL_DATE is None:
+        try:
+            _MODEL_DATE = joblib.load(os.path.join(MODULE_PATH, "./date_model.pickle"))
+        except (ValueError, TypeError) as e:
+            # Handle scikit-learn version mismatch - model may not be compatible
+            import warnings
+            warnings.warn(
+                f"Could not load German date model due to scikit-learn version mismatch: {e}. "
+                "German date extraction will work without the ML classifier.",
+                UserWarning
+            )
+            _MODEL_DATE = None
+    return _MODEL_DATE
 
 
 parser = DeDateParser(DATE_MODEL_CHARS,
@@ -32,10 +48,15 @@ parser = DeDateParser(DATE_MODEL_CHARS,
                       dateparser_settings={'PREFER_DAY_OF_MONTH': 'first',
                                            'STRICT_PARSING': False,
                                            'DATE_ORDER': 'DMY'},
-                      classifier_model=MODEL_DATE,
+                      classifier_model=None,  # Will be set lazily if available
                       alphabet_character_set=DE_ALPHA_CHAR_SET,
                       count_words=True,
                       feature_window=0)
+
+# Set model lazily if available
+_model = _get_model_date()
+if _model is not None:
+    parser.classifier_model = _model
 
 
 get_dates = parser.get_dates

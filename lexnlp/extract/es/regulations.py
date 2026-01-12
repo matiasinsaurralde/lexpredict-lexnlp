@@ -52,6 +52,11 @@ class RegulationsParser:
         dtypes = {'trigger': str, 'position': str}
         if not self.regulations_dataframe:
             path = os.path.join(lexnlp_base_path, 'lexnlp/config/es/es_regulations.csv')
+            # error_bad_lines was deprecated in pandas 1.3 and removed in 2.0, use on_bad_lines instead
+        try:
+            self.regulations_dataframe = read_csv(path, encoding='utf-8', on_bad_lines='skip', converters=dtypes)
+        except TypeError:
+            # Fallback for older pandas versions
             self.regulations_dataframe = read_csv(path, encoding='utf-8', error_bad_lines=False, converters=dtypes)
         subset = self.regulations_dataframe[['trigger', 'position']]
         tuples = [tuple(x) for x in subset.values]

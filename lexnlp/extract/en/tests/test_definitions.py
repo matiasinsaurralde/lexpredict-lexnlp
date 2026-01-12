@@ -33,7 +33,16 @@ from lexnlp.tests.utility_for_testing import load_resource_document
 
 
 TRAINED_MODEL_PATH = os.path.join(ENV_EN_DATA_DIRECTORY, 'definition_model_layered.pickle.gzip')
-parser_ml_classifier.load_compressed(TRAINED_MODEL_PATH)
+# Load model lazily to handle scikit-learn version mismatches
+try:
+    parser_ml_classifier.load_compressed(TRAINED_MODEL_PATH)
+except (ValueError, TypeError) as e:
+    import warnings
+    warnings.warn(
+        f"Could not load definition model due to scikit-learn version mismatch: {e}. "
+        "ML-based definition extraction will not be available in tests.",
+        UserWarning
+    )
 
 
 class TestEnglishDefinitions(TestCase):

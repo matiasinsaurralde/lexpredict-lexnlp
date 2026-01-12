@@ -7,9 +7,10 @@ __email__ = "support@contraxsuite.com"
 
 
 try:
-    from collections import Iterable
-except ImportError:
     from collections.abc import Iterable
+except ImportError:
+    # Python < 3.3
+    from collections import Iterable
 from typing import Callable, Any
 
 
