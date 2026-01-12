@@ -28,17 +28,9 @@ _MODEL_DATE = None
 def _get_model_date():
     global _MODEL_DATE
     if _MODEL_DATE is None:
-        try:
-            _MODEL_DATE = joblib.load(os.path.join(MODULE_PATH, "./date_model.pickle"))
-        except (ValueError, TypeError) as e:
-            # Handle scikit-learn version mismatch - model may not be compatible
-            import warnings
-            warnings.warn(
-                f"Could not load German date model due to scikit-learn version mismatch: {e}. "
-                "German date extraction will work without the ML classifier.",
-                UserWarning
-            )
-            _MODEL_DATE = None
+        from lexnlp.utils.unpickler import safe_joblib_load
+        _MODEL_DATE = safe_joblib_load(os.path.join(MODULE_PATH, "./date_model.pickle"))
+        # Silently handle version mismatch - model will be None and extraction will work without ML classifier
     return _MODEL_DATE
 
 
@@ -58,6 +50,39 @@ _model = _get_model_date()
 if _model is not None:
     parser.classifier_model = _model
 
+# Export MODEL_DATE for backward compatibility
+class _ModelDateProxy:
+    def __getattr__(self, name):
+        model = _get_model_date()
+        if model is None:
+            raise AttributeError("Model could not be loaded due to scikit-learn version mismatch")
+        return getattr(model, name)
+    
+    def __call__(self, *args, **kwargs):
+        model = _get_model_date()
+        if model is None:
+            raise RuntimeError("Model could not be loaded due to scikit-learn version mismatch")
+        return model(*args, **kwargs)
+    
+    def __getitem__(self, key):
+        model = _get_model_date()
+        if model is None:
+            raise RuntimeError("Model could not be loaded due to scikit-learn version mismatch")
+        return model[key]
+    
+    def __iter__(self):
+        model = _get_model_date()
+        if model is None:
+            raise RuntimeError("Model could not be loaded due to scikit-learn version mismatch")
+        return iter(model)
+    
+    def __len__(self):
+        model = _get_model_date()
+        if model is None:
+            raise RuntimeError("Model could not be loaded due to scikit-learn version mismatch")
+        return len(model)
+
+MODEL_DATE = _ModelDateProxy()
 
 get_dates = parser.get_dates
 

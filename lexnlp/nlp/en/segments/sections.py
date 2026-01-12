@@ -24,7 +24,6 @@ from typing import Generator, List, Optional, Tuple, Any, Union
 # Packages
 import pandas
 import regex as re
-import joblib
 
 # Project imports
 from lexnlp.nlp.en.segments.utils import build_document_line_distribution
@@ -40,8 +39,29 @@ MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class SectionSegmenterModel:
-    SECTION_SEGMENTER_MODEL = joblib.load(os.path.join(MODULE_PATH, "./section_segmenter.pickle"))
+    _SECTION_SEGMENTER_MODEL = None
     FEATURE_NAMES = []
+    
+    @classmethod
+    def _get_model(cls):
+        if cls._SECTION_SEGMENTER_MODEL is None:
+            from lexnlp.utils.unpickler import safe_joblib_load
+            cls._SECTION_SEGMENTER_MODEL = safe_joblib_load(os.path.join(MODULE_PATH, "./section_segmenter.pickle"))
+            if cls._SECTION_SEGMENTER_MODEL is None:
+                raise RuntimeError("Section segmenter model could not be loaded due to scikit-learn version mismatch")
+        return cls._SECTION_SEGMENTER_MODEL
+    
+    @classmethod
+    def get_model(cls):
+        """Get the section segmenter model (lazy loaded)"""
+        return cls._get_model()
+
+# Create a property descriptor for backward compatibility
+class _SectionSegmenterModelProperty:
+    def __get__(self, obj, objtype=None):
+        return SectionSegmenterModel._get_model()
+
+SectionSegmenterModel.SECTION_SEGMENTER_MODEL = _SectionSegmenterModelProperty()
 
 
 class DocumentSection:
@@ -225,7 +245,7 @@ def get_sections(text, window_pre=3, window_post=3, score_threshold=0.5) -> Gene
     columns = list(get_section_feature_names(len(lines), window_pre, window_post, include_doc=doc_distribution))
     columns.sort()
     test_feature_df = pandas.DataFrame(test_feature_data, columns=columns).fillna(-1)
-    test_predicted_lines = SectionSegmenterModel.SECTION_SEGMENTER_MODEL.predict_proba(test_feature_df)
+    test_predicted_lines = SectionSegmenterModel.get_model().predict_proba(test_feature_df)
     predicted_df = pandas.DataFrame(test_predicted_lines, columns=["prob_false", "prob_true"])
     section_breaks = predicted_df.loc[predicted_df["prob_true"] >= score_threshold, :].index.tolist()
 

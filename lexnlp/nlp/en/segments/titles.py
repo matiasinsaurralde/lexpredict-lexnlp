@@ -17,7 +17,6 @@ import string
 from typing import Generator
 
 # Packages
-import joblib
 import numpy
 import pandas
 import requests
@@ -34,8 +33,17 @@ from lexnlp.utils.unicode.unicode_lookup import UNICODE_CHAR_TOP_CATEGORY_MAPPIN
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Load segmenters
-SECTION_SEGMENTER_MODEL = joblib.load(os.path.join(MODULE_PATH, "./title_locator.pickle"))
+# Load segmenters lazily to avoid import-time errors with scikit-learn version mismatches
+_SECTION_SEGMENTER_MODEL = None
+
+def _get_section_segmenter_model():
+    global _SECTION_SEGMENTER_MODEL
+    if _SECTION_SEGMENTER_MODEL is None:
+        from lexnlp.utils.unpickler import safe_joblib_load
+        _SECTION_SEGMENTER_MODEL = safe_joblib_load(os.path.join(MODULE_PATH, "./title_locator.pickle"))
+        if _SECTION_SEGMENTER_MODEL is None:
+            raise RuntimeError("Title locator model could not be loaded due to scikit-learn version mismatch")
+    return _SECTION_SEGMENTER_MODEL
 
 
 def build_title_features(lines, line_id, line_window_pre, line_window_post, characters=string.printable,
@@ -211,6 +219,7 @@ def build_model(training_file_path):
     model.fit(all_feature_df, all_target_df)
 
     # Save production model
+    import joblib
     joblib.dump(model, "title_locator.pickle")
 
 
@@ -229,7 +238,7 @@ def get_titles(text, window_pre=3, window_post=3, score_threshold=0.5) -> Genera
     feature_data = build_document_title_features(text, window_pre, window_post)
 
     # Predict title lines
-    predicted_lines = SECTION_SEGMENTER_MODEL.predict_proba(feature_data)
+    predicted_lines = _get_section_segmenter_model().predict_proba(feature_data)
     predicted_df = pandas.DataFrame(predicted_lines, columns=["prob_false", "prob_true"])
     title_lines = predicted_df.loc[predicted_df["prob_true"] >= score_threshold, :].index.tolist()
 

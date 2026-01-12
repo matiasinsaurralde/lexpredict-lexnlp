@@ -23,7 +23,6 @@ from typing import Generator
 
 # Packages
 import pandas
-import joblib
 
 # Project imports
 from lexnlp.nlp.en.segments.utils import build_document_distribution
@@ -34,8 +33,31 @@ from lexnlp.nlp.en.segments.utils import build_document_distribution
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Load segmenters
-PAGE_SEGMENTER_MODEL = joblib.load(os.path.join(MODULE_PATH, "./page_segmenter.pickle"))
+# Load segmenters lazily to avoid import-time errors with scikit-learn version mismatches
+_PAGE_SEGMENTER_MODEL = None
+
+def _get_page_segmenter_model():
+    global _PAGE_SEGMENTER_MODEL
+    if _PAGE_SEGMENTER_MODEL is None:
+        from lexnlp.utils.unpickler import safe_joblib_load
+        _PAGE_SEGMENTER_MODEL = safe_joblib_load(os.path.join(MODULE_PATH, "./page_segmenter.pickle"))
+        if _PAGE_SEGMENTER_MODEL is None:
+            raise RuntimeError("Page segmenter model could not be loaded due to scikit-learn version mismatch")
+    return _PAGE_SEGMENTER_MODEL
+
+def get_page_segmenter_model():
+    """Get the page segmenter model (lazy loaded)"""
+    return _get_page_segmenter_model()
+
+# For backward compatibility
+class _PageSegmenterProxy:
+    def __getattr__(self, name):
+        return getattr(_get_page_segmenter_model(), name)
+    
+    def __call__(self, *args, **kwargs):
+        return _get_page_segmenter_model()(*args, **kwargs)
+
+PAGE_SEGMENTER_MODEL = _PageSegmenterProxy()
 
 
 def build_page_break_features(lines, 
@@ -176,7 +198,7 @@ def get_pages(text, window_pre=3, window_post=3, score_threshold=0.5) -> Generat
                                                      include_doc=doc_distribution))
     column_names.sort()
     test_feature_df = pandas.DataFrame(test_feature_data, columns=column_names).fillna(-1)
-    test_predicted_lines = PAGE_SEGMENTER_MODEL.predict_proba(test_feature_df)
+    test_predicted_lines = _get_page_segmenter_model().predict_proba(test_feature_df)
     predicted_df = pandas.DataFrame(test_predicted_lines, columns=['prob_false', 'prob_true'])
     page_breaks = predicted_df.loc[predicted_df['prob_true'] >= score_threshold, :].index.tolist()
 

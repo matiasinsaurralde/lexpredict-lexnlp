@@ -23,7 +23,6 @@ from typing import Tuple, List, Generator, Any, Union
 
 # Packages
 from nltk.tokenize.punkt import PunktTrainer, PunktSentenceTokenizer
-import joblib
 
 from lexnlp.extract.en.en_language_tokens import EnLanguageTokens
 
@@ -32,12 +31,34 @@ from lexnlp.extract.en.en_language_tokens import EnLanguageTokens
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Load segmenters
-SENTENCE_SEGMENTER_MODEL: PunktSentenceTokenizer = \
-    joblib.load(os.path.join(MODULE_PATH, "./sentence_segmenter.pickle"))
-extra_abbreviations = [a.rstrip('.') for a in EnLanguageTokens.abbreviations]
-SENTENCE_SEGMENTER_MODEL._params.abbrev_types.update(extra_abbreviations)
-SENTENCE_SEGMENTER_MODEL._params.abbrev_types.update(['no', 'l'])
+# Load segmenters lazily to avoid import-time errors with scikit-learn version mismatches
+_SENTENCE_SEGMENTER_MODEL = None
+
+def _get_sentence_segmenter_model():
+    global _SENTENCE_SEGMENTER_MODEL
+    if _SENTENCE_SEGMENTER_MODEL is None:
+        from lexnlp.utils.unpickler import safe_joblib_load
+        _SENTENCE_SEGMENTER_MODEL = safe_joblib_load(os.path.join(MODULE_PATH, "./sentence_segmenter.pickle"))
+        if _SENTENCE_SEGMENTER_MODEL is None:
+            raise RuntimeError("Sentence segmenter model could not be loaded due to scikit-learn version mismatch")
+        extra_abbreviations = [a.rstrip('.') for a in EnLanguageTokens.abbreviations]
+        _SENTENCE_SEGMENTER_MODEL._params.abbrev_types.update(extra_abbreviations)
+        _SENTENCE_SEGMENTER_MODEL._params.abbrev_types.update(['no', 'l'])
+    return _SENTENCE_SEGMENTER_MODEL
+
+def get_sentence_segmenter_model() -> PunktSentenceTokenizer:
+    """Get the sentence segmenter model (lazy loaded)"""
+    return _get_sentence_segmenter_model()
+
+# For backward compatibility, create a proxy object
+class _SentenceSegmenterProxy:
+    def __getattr__(self, name):
+        return getattr(_get_sentence_segmenter_model(), name)
+    
+    def __call__(self, *args, **kwargs):
+        return _get_sentence_segmenter_model()(*args, **kwargs)
+
+SENTENCE_SEGMENTER_MODEL: PunktSentenceTokenizer = _SentenceSegmenterProxy()
 
 
 PRE_PROCESS_TEXT_REMOVE = re.compile(

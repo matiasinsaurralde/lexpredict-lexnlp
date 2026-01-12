@@ -23,7 +23,6 @@ from re import Pattern, compile as re_compile
 from typing import Dict, Final, Generator, List, Set, Tuple, Union, Optional
 
 # third-party imports
-import joblib
 from pandas import DataFrame
 
 # LexNLP
@@ -35,8 +34,31 @@ from lexnlp.nlp.en.segments.utils import build_document_line_distribution
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Load segmenters
-PARAGRAPH_SEGMENTER_MODEL: Final = joblib.load(os.path.join(MODULE_PATH, "./paragraph_segmenter.pickle"))
+# Load segmenters lazily to avoid import-time errors with scikit-learn version mismatches
+_PARAGRAPH_SEGMENTER_MODEL = None
+
+def _get_paragraph_segmenter_model():
+    global _PARAGRAPH_SEGMENTER_MODEL
+    if _PARAGRAPH_SEGMENTER_MODEL is None:
+        from lexnlp.utils.unpickler import safe_joblib_load
+        _PARAGRAPH_SEGMENTER_MODEL = safe_joblib_load(os.path.join(MODULE_PATH, "./paragraph_segmenter.pickle"))
+        if _PARAGRAPH_SEGMENTER_MODEL is None:
+            raise RuntimeError("Paragraph segmenter model could not be loaded due to scikit-learn version mismatch")
+    return _PARAGRAPH_SEGMENTER_MODEL
+
+def get_paragraph_segmenter_model():
+    """Get the paragraph segmenter model (lazy loaded)"""
+    return _get_paragraph_segmenter_model()
+
+# For backward compatibility
+class _ParagraphSegmenterProxy:
+    def __getattr__(self, name):
+        return getattr(_get_paragraph_segmenter_model(), name)
+    
+    def __call__(self, *args, **kwargs):
+        return _get_paragraph_segmenter_model()(*args, **kwargs)
+
+PARAGRAPH_SEGMENTER_MODEL: Final = _ParagraphSegmenterProxy()
 
 # regular expression for newlines
 RE_NEW_LINE: Final[Pattern] = re_compile(r'(?P<line>[^\r\n]*)((\r\n)|(\n\r)|\n|\r)')
@@ -240,7 +262,7 @@ def get_paragraph_spans(
     feature_df: DataFrame = DataFrame(feature_data, columns=column_names).fillna(-1).astype(int)
 
     try:
-        predicted_lines = PARAGRAPH_SEGMENTER_MODEL.predict_proba(feature_df)
+        predicted_lines = _get_paragraph_segmenter_model().predict_proba(feature_df)
         predicted_df: DataFrame = DataFrame(predicted_lines, columns=["prob_false", "prob_true"])
         paragraph_breaks = predicted_df.loc[predicted_df["prob_true"] >= score_threshold, :].index.tolist()
 
